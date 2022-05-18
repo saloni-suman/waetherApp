@@ -4,6 +4,8 @@ import mongoose from 'mongoose';
 import weatherCurrents from './models/weatherCurrent.js'
 import weatherForeCastes from './models/weatherForeCaste.js';
 import bodyParser from 'body-parser';
+import objectMapper from 'object-mapper';
+;
 
 const app = express();
 
@@ -30,22 +32,36 @@ app.post('/current', (req,res) => {
         fetch(currentURI)
         .then(response => response.json())
         .then(data => { 
-
+            console.log(data.current['temp_c'])
             const current = new weatherCurrents({
                 city: data.location['name'],
                 country: data.location['country'],
                 region: data.location['region'],
                 condition: data.current.condition['text'],
-                tempc: data.current['temp_c'],
+                tempC: data.current['temp_c'],
                 feelsLikeC: data.current['feelslike_c'],
                 windKmphValue: data.current['wind_kph'],
                 updatedOn: data.current['last_updated'],
                 currentURI: currentURI
             })
-    
+
+            const map = {
+                city: req.body.town || "town",
+                country: req.body.country || "nation",
+                region: req.body.region || "state",
+                condition: req.body.condition || "weather condition",
+                tempC: req.body.tempC || "temperature(celcius)",
+                feelsLikeC: req.body.feelsLikeC || "feels like(celcius)",
+                windKmphValue: req.body.windKmphValue || "wind speed(KMPH)",
+                updatedOn: req.body.updatedOn || "last updated on",
+                currentURI: req.body.currentURI || "URI(current)",
+            }
+
+            var dest = objectMapper(current, map);
+            
             current.save()
                 .then((result) => {
-                    res.send(result)
+                    res.send(dest)
                 })
                 .catch((err) => res.send(err))
         
@@ -74,12 +90,30 @@ app.post('/forecaste' , (req,res) => {
             
         })
 
+        const map = {
+            city: req.body.town || "town",
+            country: req.body.country || "nation",
+            region: req.body.region || "state",
+            condition: req.body.condition|| "weather condition",
+            minTempC: req.body.minTempC || " Minimum temperature(celcius)",
+            maxTempC: req.body.maxTempC || "Maximum temperatre(celcius)",
+            sunRise: req.body.sunRise || "Sunrise At",
+            sunSet: req.body.sunSet || "Sunset At",
+            chanceRain: req.body.chanceRain || "chances of Rain",
+            chanceSnow: req.body.chanceSnow || "chances of Snow",
+            updatedOn: req.body.updatedOn || "last Updated on",
+            forecasteURI: req.body.forecasteURI || "URI(Forecast)",
+        }
+        var dest = objectMapper(forecaste, map);
+
         forecaste.save()
             .then((result) => {
-                res.send(result)
+                res.send(dest)
             })
             .catch((err) => res.send(err))
     })
+    .catch((err) => res.send("error, please try again"))
+    
 })
 
 
